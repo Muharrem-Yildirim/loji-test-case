@@ -20,9 +20,6 @@ class PrometheusService
         $this->saveMetrics();
     }
 
-    /**
-     * Prometheus formatında tüm metrikleri al
-     */
     public function getMetrics()
     {
         $metricsText = '';
