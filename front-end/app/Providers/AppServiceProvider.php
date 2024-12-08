@@ -25,8 +25,8 @@ class AppServiceProvider extends ServiceProvider
 
         Http::macro('serviceA', function () {
             return Http::baseUrl(sprintf(
-                format: 'http://host.docker.internal:',
-                values: config('microservices.service-a.port')
+                'http://host.docker.internal:%s',
+                config('microservices.service-a.port')
             ));
         });
     }

@@ -13,7 +13,7 @@ services:
       - APP_DEBUG=true
       - APP_URL=http://localhost:8000
       - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
-      - "${SERVICE_A_PORT:-8001}:${SERVICE_A_PORT:-8001}"
+      - SERVICE_A_PORT=8001 # Default service-a port can be changed in environment file
     depends_on:
       - service_a
     command: sh -c "npm run dev & php artisan serve --host=0.0.0.0 --port=9000"
@@ -24,11 +24,11 @@ services:
     volumes:
       - ./service-a:/var/www/html
     ports:
-      - "8001:9000"
+      - "${SERVICE_A_PORT:-8001}:9000"
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
-      - "${SERVICE_B_PORT:-8002}:${SERVICE_B_PORT:-8002}"
+      - SERVICE_B_PORT=8002 # Default service-b port can be changed in environment file
     depends_on:
       - rabbitmq
     command: sh -c "php artisan serve --host=0.0.0.0 --port=9000"
@@ -39,7 +39,7 @@ services:
     volumes:
       - ./service-b:/var/www/html
     ports:
-      - "8002:9000"
+      - "${SERVICE_B_PORT:-8002}:9000"
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
