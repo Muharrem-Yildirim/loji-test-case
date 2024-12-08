@@ -30,6 +30,7 @@ services:
             - "${SERVICE_A_PORT:-8001}:9000"
             - "46018:46017" # Dapr sidecar port
             - "46800:36767" # Dapr sidecar port
+            - "3500:3500"
         environment:
             - APP_ENV=local
             - APP_DEBUG=true
@@ -52,6 +53,7 @@ services:
                 dapr run \
                   --app-id service_a \
                   --placement-host-address=placement:50006 \
+                  --dapr-http-port=3500 \
                   --scheduler-host-address=scheduler:50007 \
                   --app-port 9000 \
                   -- php artisan serve --host=0.0.0.0 --port=9000
@@ -66,6 +68,7 @@ services:
             - "${SERVICE_B_PORT:-8002}:9000"
             - "46017:46017" # Dapr sidecar port
             - "46801:36767" # Dapr sidecar port
+            - "3600:3600"
         environment:
             - APP_ENV=local
             - APP_DEBUG=true
@@ -88,6 +91,7 @@ services:
                   --app-id service_b \
                   --placement-host-address=placement:50006 \
                   --scheduler-host-address=scheduler:50007 \
+                  --dapr-http-port=3600 \
                   --app-port 9000 \
                   -- php artisan serve --host=0.0.0.0 --port=9000
     rabbitmq:
