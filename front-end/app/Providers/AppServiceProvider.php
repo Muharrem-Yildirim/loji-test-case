@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -29,5 +30,10 @@ class AppServiceProvider extends ServiceProvider
                 config('microservices.service-a.port')
             ));
         });
+
+        Context::add('request', [
+            'body' => request()->all(),
+            'full' => minify(request())
+        ]);
     }
 }
