@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import Guest from "@/Layouts/GuestLayout";
 import { PageProps } from "@/types";
 import { Head, router } from "@inertiajs/react";
 import { useState } from "react";
 
-export default function Home() {
+export default function Home({
+    errors,
+    traceId = null,
+}: PageProps & { error?: string; traceId?: string | null }) {
     return (
         <>
             <Head title="Home" />
@@ -17,29 +19,38 @@ export default function Home() {
                             Home
                         </h2>
                     </div>
-                    <MakeRequest />
+                    <MakeRequest traceId={traceId} />
                 </div>
             </div>
         </>
     );
 }
 
-const MakeRequest = () => {
-    const [traceId, setTraceId] = useState("");
-
+const MakeRequest = ({ traceId = null }: { traceId?: string | null }) => {
     const sendRequest = () => {
         router.post(
             route("home.store"),
             {},
             {
-                // onSuccess: (res: PageProps & { data: { traceId: string } }) => {
-                //     setTraceId(res.data.traceId);
-                // },
-                onError: () => {
-                    setTraceId("");
+                onSuccess: ({ props }) => {
+                    console.log(props);
+                    toast({
+                        title: "Success",
+                        description: (
+                            <span
+                                dangerouslySetInnerHTML={{
+                                    __html:
+                                        (props?.serviceResponse as string) ??
+                                        "Request successfuly sent.",
+                                }}
+                            ></span>
+                        ),
+                    });
+                },
+                onError: (errors) => {
                     toast({
                         title: "Error",
-                        description: "Something went wrong",
+                        description: errors.error,
                     });
                 },
             }
@@ -53,6 +64,7 @@ const MakeRequest = () => {
                     Make Request
                 </h2>
             </div>
+            {traceId && <p>Trace ID: {traceId}</p>}
             <Button className="mt-10" onClick={sendRequest}>
                 Send
             </Button>

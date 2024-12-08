@@ -44,6 +44,12 @@ class HomeController extends Controller
             minify($response->body()),
         );
 
-        return redirect()->back();
+        $serviceMessage = array_key_exists('message', $response->json())
+            ? $response->json()['message'] : null;
+
+        return Inertia::render('home', [
+            'traceId' => $traceId,
+            'serviceResponse' => $serviceMessage,
+        ]);
     }
 }
