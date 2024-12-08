@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Str;
 
 class HomeController extends Controller
 {
@@ -19,7 +20,7 @@ class HomeController extends Controller
 
     public function store(Request $request)
     {
-        $traceId = $request->header('X-Trace-Id') ?? uniqid('frontend_', true);
+        $traceId = $request->header('X-Trace-Id') ?? str()->uuid()->toString();
 
         $response = Http::serviceA()
             ->withHeaders(['X-Trace-Id' => $traceId])
