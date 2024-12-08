@@ -1,17 +1,14 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-    name: rabbitmq-binding
+    name: rabbitmq-pubsub
     namespace: default
 spec:
-    type: bindings.rabbitmq
+    type: pubsub.rabbitmq
     version: v1
-    queue: "default"
     metadata:
         - name: host
           value: "amqp://guest:guest@rabbitmq:5672"
-        - name: queueName
-          value: "default"
         - name: durable
           value: "true"
         - name: auto-delete

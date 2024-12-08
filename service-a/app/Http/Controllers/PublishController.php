@@ -12,16 +12,22 @@ class PublishController extends Controller
     {
         Log::channel('frontend.receive')->info(json_encode($request->all()));
 
-        //@TODO: send to service-b via RabbitMQ publish
-
-        $response = Http::withHeaders([
-            'dapr-app-id' => 'service-a',  // Dapr app id for Service A
-        ])->post('http://localhost:3500/api/consume', [
+        $publishResponse = Http::dapr()->post('/publish/rabbitmq-pubsub/default', [
+            'operation' => 'create',
             'data' => $request->validated(),
-
         ]);
 
-        Log::channel('service-b.publish')->info(($response->body()));
+        if ($publishResponse->failed()) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => $publishResponse->body(),
+                ],
+                500
+            );
+        }
+
+        Log::channel('service-b.publish')->info(($publishResponse->body()));
 
         return response()->json([
             'success' => true,
@@ -29,7 +35,7 @@ class PublishController extends Controller
                 'Your message has been published by <b>%s</b> with following data: <b>%s</b> <br/><br/> X-Trace-ID: %s',
                 'service-a',
                 json_encode($request->validated()),
-                $request->header('X-Trace-ID')
+                $request->header('X-Trace-ID'),
             ),
         ]);
     }
