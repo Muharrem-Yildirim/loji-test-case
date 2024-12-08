@@ -12,9 +12,17 @@ class PublishController extends Controller
     {
         Log::channel('frontend.receive')->info(json_encode($request->all()));
 
-        $publishResponse = Http::dapr()->post('/publish/rabbitmq-pubsub/default', [
+        $publishResponse = Http::dapr()->withHeaders(
+            [
+                'X-Trace-ID' => $request->header('X-Trace-ID')
+            ]
+        )->post('/publish/rabbitmq-pubsub/default', [
             'operation' => 'create',
-            'data' => $request->validated(),
+            ...$request->validated(),
+            'metadata' => [
+                'contentType' => 'application/json',
+                'X-Trace-ID' => $request->header('X-Trace-ID'),
+            ],
         ]);
 
         if ($publishResponse->failed()) {
