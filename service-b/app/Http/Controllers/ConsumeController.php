@@ -13,7 +13,7 @@ class ConsumeController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => sprintf('Consumed successfully, Trace ID is %s', request()->input('data.data.trace_id')),
+            'message' => sprintf('Consumed successfully, Trace ID is %s', request()->input('data.trace_id')),
         ]);
     }
 }
