@@ -16,7 +16,6 @@ class HomeController extends Controller
     }
 
 
-
     public function store(Request $request)
     {
         $traceId = $request->header('X-Trace-Id') ?? str()->uuid()->toString();
