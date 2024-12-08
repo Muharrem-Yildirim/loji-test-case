@@ -51,6 +51,7 @@ const MakeRequest = ({ traceId = null }: { traceId?: string | null }) => {
                     toast({
                         title: "Error",
                         description: errors.error,
+                        variant: "destructive",
                     });
                 },
             }
