@@ -1,54 +1,136 @@
 services:
-  front_end:
-    build:
-      context: ./front-end
-    volumes:
-      - ./front-end:/var/www/html
-      - ./front-end/node_modules:/var/www/html/node_modules 
-    ports:
-      - "8000:9000"
-      - "5173:5173"
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - APP_URL=http://localhost:8000
-      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
-      - SERVICE_A_PORT=8001 # Default service-a port can be changed in environment file
-    depends_on:
-      - service_a
-    command: sh -c "npm run dev & php artisan serve --host=0.0.0.0 --port=9000"
+    front_end:
+        build:
+            context: ./front-end
+        volumes:
+            - ./front-end:/var/www/html
+            - ./front-end/node_modules:/var/www/html/node_modules
+            - ./dapr/components:/root/.dapr/components
+        ports:
+            - "8000:9000"
+            - "5173:5173"
+        environment:
+            - APP_ENV=local
+            - APP_DEBUG=true
+            - APP_URL=http://localhost:8000
+            - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+            - SERVICE_A_PORT=8001 # Default service-a port can be changed in environment file
+        depends_on:
+            - service_a
+        command: sh -c "npm run dev & php artisan serve --host=0.0.0.0 --port=9000"
 
-  service_a:
-    build:
-      context: ./service-a
-    volumes:
-      - ./service-a:/var/www/html
-    ports:
-      - "${SERVICE_A_PORT:-8001}:9000"
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - SERVICE_B_PORT=8002 # Default service-b port can be changed in environment file
-    depends_on:
-      - rabbitmq
-    command: sh -c "php artisan serve --host=0.0.0.0 --port=9000"
+    service_a:
+        build:
+            context: ./service-a
+        volumes:
+            - ./service-a:/var/www/html
+            - ./dapr/components:/root/.dapr/components
+            - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+            - "${SERVICE_A_PORT:-8001}:9000"
+            - "46018:46017" # Dapr sidecar port
+            - "46800:36767" # Dapr sidecar port
+        environment:
+            - APP_ENV=local
+            - APP_DEBUG=true
+            - SERVICE_B_PORT=8002 # Default service-b port can be changed in environment file
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+            # - placement
+            # - sidecar_a
+        networks:
+            - dapr_network
+        command:
+            - sh
+            - -c
+            - |
+                if [ ! -f /root/.dapr/bin/daprd ]; then
+                  dapr init -s --runtime-version 1.14.1
+                fi
 
-  service_b:
-    build:
-      context: ./service-b
-    volumes:
-      - ./service-b:/var/www/html
-    ports:
-      - "${SERVICE_B_PORT:-8002}:9000"
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-    depends_on:
-      - rabbitmq
-    command: sh -c "php artisan serve --host=0.0.0.0 --port=9000"
+                dapr run \
+                  --app-id service_a \
+                  --placement-host-address=placement:50006 \
+                  --scheduler-host-address=scheduler:50007 \
+                  --app-port 9000 \
+                  -- php artisan serve --host=0.0.0.0 --port=9000
+    service_b:
+        build:
+            context: ./service-b
+        volumes:
+            - ./service-b:/var/www/html
+            - ./dapr/components:/root/.dapr/components
+            - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+            - "${SERVICE_B_PORT:-8002}:9000"
+            - "46017:46017" # Dapr sidecar port
+            - "46801:36767" # Dapr sidecar port
+        environment:
+            - APP_ENV=local
+            - APP_DEBUG=true
+        depends_on:
+            rabbitmq:
+                condition: service_healthy
+            # - placement
+            # - sidecar_b
+        networks:
+            - dapr_network
+        command:
+            - sh
+            - -c
+            - |
+                if [ ! -f /root/.dapr/bin/daprd ]; then
+                  dapr init -s --runtime-version 1.14.1
+                fi
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+                dapr run \
+                  --app-id service_b \
+                  --placement-host-address=placement:50006 \
+                  --scheduler-host-address=scheduler:50007 \
+                  --app-port 9000 \
+                  -- php artisan serve --host=0.0.0.0 --port=9000
+    rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        networks:
+            - dapr_network
+        healthcheck:
+            test: rabbitmq-diagnostics -q ping
+            interval: 5s
+            timeout: 5s
+            retries: 3
+    placement:
+        image: "daprio/dapr"
+        command: ["./placement", "--port", "50006", ""]
+        ports:
+            - "50006:50006"
+        networks:
+            - dapr_network
+
+    scheduler:
+        image: "daprio/dapr"
+        command:
+            [
+                "./scheduler",
+                "--port",
+                "50007",
+                "--etcd-data-dir=/var/lock/dapr/scheduler",
+            ]
+        ports:
+            - "50007:50007"
+        # WARNING - This is a tmpfs volume, your state will not be persisted across restarts
+        volumes:
+            - type: tmpfs
+              target: /data
+              tmpfs:
+                  size: "10000"
+                  mode: 511
+        networks:
+            - dapr_network
+
+networks:
+    dapr_network:
+        driver: bridge

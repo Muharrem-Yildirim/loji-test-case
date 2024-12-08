@@ -26,6 +26,6 @@ RUN npm install && npm run build
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-CMD ["php-fpm"]
+CMD ["sh", "-c", "php-fpm"]
 
 EXPOSE 9000
