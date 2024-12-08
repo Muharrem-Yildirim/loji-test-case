@@ -20,7 +20,6 @@ class PublishController extends Controller
             'operation' => 'create',
             ...$request->validated(),
             'metadata' => [
-                'contentType' => 'application/json',
                 'X-Trace-ID' => $request->header('X-Trace-ID'),
             ],
         ]);
