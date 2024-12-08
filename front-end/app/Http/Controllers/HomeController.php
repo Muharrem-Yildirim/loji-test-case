@@ -25,7 +25,7 @@ class HomeController extends Controller
         $response = Http::serviceA()
             ->withHeaders(['X-Trace-Id' => $traceId])
             ->acceptJson()
-            ->post('/api/receive', [
+            ->post('/api/publish', [
                 'message' => $request->get('message', 'default message'),
             ]);
 

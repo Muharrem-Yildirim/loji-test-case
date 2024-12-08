@@ -2,4 +2,4 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::resource('receive', App\Http\Controllers\ReceiveController::class);
+Route::resource('publish', App\Http\Controllers\PublishController::class)->only('store');
