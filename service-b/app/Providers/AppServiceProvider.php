@@ -25,6 +25,6 @@ class AppServiceProvider extends ServiceProvider
             'full' => minify(request()),
         ]);
 
-        Context::add('trace_id', request()->input('data.data.trace_id'));
+        Context::add('trace_id', request()->input('data.trace_id'));
     }
 }
