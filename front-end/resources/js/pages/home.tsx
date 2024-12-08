@@ -42,7 +42,6 @@ const MakeRequest = ({ traceId = null }: { traceId?: string | null }) => {
             },
             {
                 onSuccess: ({ props }) => {
-                    console.log(props);
                     toast({
                         title: "Success",
                         description: (
@@ -59,7 +58,7 @@ const MakeRequest = ({ traceId = null }: { traceId?: string | null }) => {
                 onError: (errors) => {
                     toast({
                         title: "Error",
-                        description: errors.error,
+                        description: errors?.error ?? Object.values(errors)[0],
                         variant: "destructive",
                     });
                 },

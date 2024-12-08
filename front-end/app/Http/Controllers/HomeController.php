@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PushServiceARequest;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -16,12 +18,13 @@ class HomeController extends Controller
     }
 
 
-    public function store(Request $request)
+    public function store(PushServiceARequest $request)
     {
         $traceId = $request->header('X-Trace-Id') ?? str()->uuid()->toString();
 
         $response = Http::serviceA()
             ->withHeaders(['X-Trace-Id' => $traceId])
+            ->acceptJson()
             ->post('/api/receive', [
                 'message' => $request->get('message', 'default message'),
             ]);
@@ -34,6 +37,12 @@ class HomeController extends Controller
                 minify($response->body()),
             );
 
+            if ($response->status() === SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY) {
+                return back()->withErrors([
+                    'error' => $response->json()['message'],
+                ]);
+            }
+
             return back()->withErrors([
                 'error' => 'Something went wrong.',
             ]);
@@ -43,7 +52,7 @@ class HomeController extends Controller
             minify($response->body()),
         );
 
-        $serviceMessage = array_key_exists('message', $response->json())
+        $serviceMessage = array_key_exists('message', $response->json() ?? [])
             ? $response->json()['message'] : null;
 
         return Inertia::render('home', [
