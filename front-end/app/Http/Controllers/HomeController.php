@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use Str;
 
 class HomeController extends Controller
 {
