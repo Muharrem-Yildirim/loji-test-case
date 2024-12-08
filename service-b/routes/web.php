@@ -1,6 +1,5 @@
 <?php
 
-use App\Services\PrometheusExporter;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
